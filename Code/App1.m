@@ -11,4 +11,33 @@ addpath(genpath(cd))
 [filename, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'off');
 data = load([path filename]); % Load the data from the selected mat file
-% Extract EEG data for the first trial (number samples, number channel)
+signal = data.signal; % Extract EEG data (number samples, number channel)
+trialnr = data.trialnr;
+flashing = data.Flashing;
+stimulus_type = data.StimulusType;
+stimulus_code = data.StimulusCode;
+phase_sequence = data.PhaseInSequence;
+ind = find(trialnr<=max(trialnr));
+%% ------------------------------- Step 2: Result plot --------------------------------
+% Plot original signal for num_channel 1
+subplot(4, 1, 1);
+plot(signal(:, 1));
+title('Channel: 1');
+legend('Raw signal', fontsize=8)
+
+% Plot Flashing
+subplot(4, 1, 2);
+plot(flashing); hold on;
+legend('Flashing', fontsize=8);
+
+% Plot StimulusCode and PhaseInSequence
+subplot(4, 1, 3);
+plot(stimulus_code); hold on;
+plot(max(stimulus_code) / 2 * stimulus_type(ind), 'r', 'linewidth', 2)
+plot(phase_sequence, 'g', 'linewidth', 2);
+legend('Stimulus Code', 'desired character', 'Phase in sequence', fontsize=8);
+
+% Plot trialnr
+subplot(4, 1, 4);
+plot(trialnr, 'linewidth', 1);
+ylabel('Trial Number', fontsize=10);
