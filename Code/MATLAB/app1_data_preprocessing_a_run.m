@@ -12,12 +12,13 @@ addpath(genpath(cd))
     'multiselect', 'off');
 data = load([path filename]); % Load the data from the selected mat file
 signal = data.signal; % Extract EEG data (number samples, number channel)
-trialnr = data.trialnr;
-flashing = data.Flashing;
-stimulus_type = data.StimulusType;
-stimulus_code = data.StimulusCode;
-phase_sequence = data.PhaseInSequence;
-ind = find(trialnr<=max(trialnr));
+trialnr = data.trialnr; % Extract trial numbers
+flashing = data.Flashing; % Extract flashing information
+stimulus_type = data.StimulusType; % Extract stimulus types
+stimulus_code = data.StimulusCode; % Extract stimulus codes
+phase_sequence = data.PhaseInSequence; % Extract phase sequence
+% Find indices of trials less than or equal to the maximum trial number
+ind = find(trialnr<=max(trialnr)); 
 %% ------------------------------- Step 2: Result plot --------------------------------
 % Plot original signal for num_channel 1
 subplot(4, 1, 1);
