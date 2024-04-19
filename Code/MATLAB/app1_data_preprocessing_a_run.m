@@ -8,9 +8,9 @@ close all;      % Close all figures
 % Add the current directory and its subfolders to the MATLAB search path
 addpath(genpath(cd)) 
 % Let the user select a mat file containing EEG data
-[filename, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'off');
-data = load([path filename]); % Load the data from the selected mat file
+data = load([path filenames]); % Load the data from the selected mat file
 signal = data.signal; % Extract EEG data (number samples, number channel)
 trialnr = data.trialnr; % Extract trial numbers
 flashing = data.Flashing; % Extract flashing information

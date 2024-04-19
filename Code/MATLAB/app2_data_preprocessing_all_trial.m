@@ -8,8 +8,8 @@ close all;      % Close all figures
 % Add the current directory and its subfolders to the MATLAB search path
 addpath(genpath(cd)) 
 % Let the user select a mat file containing EEG data
-[filename, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
+[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+    'multiselect', 'off');
 
 fs = 240;  % Define sampling frequency
 time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
@@ -17,8 +17,8 @@ duration_trial = round(time_trial/1000 * fs);
 %%
 count1 = 0;
 count2 = 0;
-for i = 1:length(filename) 
-    load([path filename{i}]); % Load the data from the selected mat file
+for i = 1:length(filenames) 
+    load([path filenames{i}]); % Load the data from the selected mat file
     for j = 1:max(trialnr)
         % Get the start time of each trial
         ind = find(trialnr==j);
