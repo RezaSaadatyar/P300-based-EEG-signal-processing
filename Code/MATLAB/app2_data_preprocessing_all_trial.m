@@ -12,11 +12,12 @@ addpath(genpath(cd))
     'multiselect', 'off');
 
 fs = 240;  % Define sampling frequency
-time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
-duration_trial = round(time_trial/1000 * fs);
-%%
+%% ----------------Step 2: Detect target trials from non target trials ----------------
 count1 = 0;
 count2 = 0;
+time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
+duration_trial = round(time_trial/1000 * fs);
+
 for i = 1:length(filenames) 
     load([path filenames{i}]); % Load the data from the selected mat file
     for j = 1:max(trialnr)
@@ -31,11 +32,11 @@ for i = 1:length(filenames)
             data_target(:, :, count1) = data;% target trials
         elseif max(StimulusType(ind)) == 0 % type of ith trial
             count2 = count2 + 1;
-            data_non_target(:, :, count2)= data; % non-target trials
+            data_non_target(:, :, count2) = data; % non-target trials
         end
     end
 end
-%% ------------------------------- Step 2: Plot Result --------------------------------
+%% ------------------------------- Step 3: Plot Result --------------------------------
 target_a_trial = data_target(:, 1, 1);
 non_target_a_trial = data_non_target(:, 1, 1);
 target_mean = mean(data_target(:, 1, :), 3);
