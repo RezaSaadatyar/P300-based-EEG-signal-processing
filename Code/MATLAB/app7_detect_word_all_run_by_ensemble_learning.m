@@ -14,7 +14,7 @@ addpath(genpath(cd))
 fs = 240;  % Define sampling frequency
 %% ------------------------- Step 2: Filtering all runs -------------------------------
 f_low = 0.5;
-f_high = 20;
+f_high = 30;
 order = 10;  
 notch_freq = 50;
 notch_filter = 'off';
@@ -32,19 +32,19 @@ duration_trial = round(time_trial/1000 * fs);
 % select_channel = 1:64; 
 select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz,Cz,Pz,Oz,C3,C4,P3,P4,Po7,Po8
 
-for i = 1:length(filenames) 
-    load([path filenames{i}]); % Load the data from the selected mat file
-    for j = 1:max(trialnr)
+for j = 1:length(filenames) 
+    load([path filenames{j}]); % Load the data from the selected mat file
+    for k = 1:max(trialnr)
         % Get the start time of each trial
-        ind = find(trialnr==j);
+        ind = find(trialnr==k);
         % Start point of ith trial untill of ith trial
         data  = signal(ind(1):ind(1) + (duration_trial - 1), select_channel);
-        % Filtering
+        % ------------------------------ Filtering ------------------------------------
         data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
-        % Downsampling
-        data = resample(data, p, q);       
-        % Detect target trials from non target trials
+        % ------------------------------ Downsampling --------------------------------- 
+        % data = resample(data, p, q);       
+        % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
             target_data(:, count1) = data(:);% target trials
@@ -54,37 +54,35 @@ for i = 1:length(filenames)
         end
     end
 end
-
-% Balance dataset
-ind = randperm(size(non_target_data, 2), size(target_data, 2));
-non_target_data = non_target_data(:, ind);
-
-% Combine target & non target data
-data = [target_data, non_target_data];
-labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(non_target_data, 2))];
 %% ----------------------------- Step 5: Model training -------------------------------
-model = fitcsvm(data', labels, 'Standardize', 1);
-% model = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', 'KernelScale',...
-%     100, 'BoxConstraint', 120);
+ind= 1:size(target_data, 2):size(non_target_data, 2);
+
+for j = 1:length(ind)
+    data2_sub = non_target_data(:, ind(j):ind(j) + size(target_data, 2) - 1);
+    data = [target_data, data2_sub];  % Combine target & non target data
+    labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(data2_sub, 2))];
+
+    % model = fitcsvm(data', labels, 'Standardize', 1);
+    model{j} = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', ...
+        'KernelScale', 120, 'BoxConstraint', 100);
+end
 %% ------- Step 6: Word detection in all runs using the training model training -------
+time_on = 0.1;        %  Active time of each character (sec)
+num_sequance = 3;     % number of seqeunce
+detected_word = [];
+num_all_characters = 12;
+lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
+true_word = ['FOOD', 'MOOT', 'HAM', 'PIE', 'CAKE', 'TUNA', 'ZYGOT', '4567'];% Session 12
+
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-
-time_on = 0.1;         %  Active time of each character (sec)
-num_sequance = 4;     % number of seqeunce
-num_all_characters = 12;
-lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
-% true_word = ['CAT', 'DOG', 'FISH', 'WATER', 'BOWL']; % Session 10
-% true_word = ['HAT', 'HAT', 'GLOVE', 'SHOES', 'FISH', 'RAT']; % Session 11
-true_word = ['FOOD', 'MOOT', 'HAM', 'PIE', 'CAKE', 'TUNA', 'ZYGOT', '4567'];% Session 12
 % ---------------- Step 6.1: Detect number of characters in each run ------------------
-detected_word = [];
 for i = 1:length(filenames)
     load([path filenames{i}]); % Load the data from the selected mat file
-    indx = find(PhaseInSequence==2);
-    id = find(PhaseInSequence((indx - 1))==1); % Detect number of characters
-    strartpoints = indx(id);                   % Detect start point each of character
+    ind = find(PhaseInSequence == 2);
+    id_ = find(PhaseInSequence((ind - 1)) == 1); % Detect number of characters
+    strartpoints = ind(id_);                   % Detect start point each of character
     num_characters = numel(strartpoints);      % Number of characters
     % ------------- Step 6.2: Find the index of trials for each character -------------
     for j = 1:num_characters
@@ -97,71 +95,30 @@ for i = 1:length(filenames)
         trials = unique(trialnr(ind));
         % --------------- Step 6.3: Split trials related each character ---------------
         score= zeros(1, num_all_characters);
-        for k = 1: num_all_characters * num_sequance
+        for k = 1:num_all_characters * num_sequance
             ind_trial= find(trialnr==trials(k));
             % Start point of ith trial untill of ith trial
-            sig = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
-            % Filtering
-            sig = filtering(sig, f_low, f_high, order, fs, notch_freq, filter_active,...
-                notch_filter, type_filter, design_method);
-            % Downsampling
-            sig = resample(sig, p, q);  
-            sig = sig(:);
-            [~, distacne]= predict(model, sig');
+            data = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
+            % ----------------------------- Filtering ---------------------------------
+            data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
+            notch_filter, type_filter, design_method);
+            % ----------------------------- Downsampling ------------------------------
+            % data = resample(data, p, q);  
+            for r = 1:size(model, 2)
+                [~, distacne] = predict(model{r}, data(:)');
+                dist(r) = distacne(2);
+            end
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
-            score(ind_stim) = score(ind_stim) + distacne(2);
+            score(ind_stim) = score(ind_stim) + sum(dist);
         end
         % target row and column
         [~, col] = max(score(1:6));
         [~, row] = max(score(7:12));
-
         detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character  
     end
     detected_word = [detected_word, detect];
     disp(['Detected word: ', detect])
-    detect = [];
+    detect=[];
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
-disp(['Accuracy: ',num2str(accuracy)])
-%% ------------------------------- Step 5: Classification -----------------------------
-% k_fold = 5;
-% num_neigh_knn = 3;
-% kernel_svm = 'linear';
-% distr_bayesian = 'normal';  % 'normal','kernel'
-% % 'linear','quadratic','diaglinear','diagquadratic','pseudolinear','pseudoquadratic'
-% discrimtype_lda = 'linear'; 
-% num_neurons_elm = 12;
-% Num_Neurons = 15;
-% num_center_rbf = 20;
-% sigma_pnn = 0.1;
-% type_pnn = 'Euclidean';      % 'Euclidean';'Correlation'
-% classifiation(data, labels, k_fold, num_neigh_knn, kernel_svm, distr_bayesian, ...
-%               discrimtype_lda, num_neurons_elm, num_center_rbf, sigma_pnn, type_pnn)
-% %% -------------------------------------- Plot ----------------------------------------
-% figure();
-% classes = unique(labels);
-% if size(features, 1) < size(features, 2); features = features'; end
-% 
-% for i = 1:numel(classes)
-%     if size(features, 1) == 2
-%         plot(features(labels == classes(i), 1), features(labels==classes(i), 2), 'o', ...
-%             'LineWidth', 1.5, 'MarkerSize', 4); hold on
-%         xlabel('Feature 1'); ylabel('Feature 2');
-%     elseif size(features, 1) > 2
-%         plot3(features(labels == classes(i), 1), features(labels == classes(i), 2), ...
-%             features(labels == classes(i), 3), 'o', 'LineWidth', 1.5, 'MarkerSize', 4);
-%         hold on
-%         xlabel('Feature 1'); ylabel('Feature 2'); zlabel('Feature 3');
-%     end
-% end
-% grid on; til=legend("class1", "Class2"); 
-% 
-% figure
-% subplot(2, 1, 1)
-% plot(data(:, 11), 'linewidth', 2);
-% hold on
-% plot(filtered_data(:, 11), 'linewidth', 2);
-% legend('Raw data', 'Filtered_data')
-% subplot(2, 1, 2)
-% plot(downsample_data(:, 11), 'linewidth', 2);
-% legend('Dowsampling')
+disp(['Accuracy: ', num2str(accuracy)])
