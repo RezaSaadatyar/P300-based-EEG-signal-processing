@@ -39,12 +39,12 @@ for i = 1:length(filenames)
         ind = find(trialnr==j);
         % Start point of ith trial untill of ith trial
         data  = signal(ind(1):ind(1) + (duration_trial - 1), select_channel);
-        % Filtering
+        % ------------------------------- Filtering -----------------------------------
         data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
-        % Downsampling
+        % ------------------------------- Downsampling -------------------------------- 
         % data = resample(data, p, q);       
-        % Detect target trials from non target trials
+        % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
             target_data(:, count1) = data(:);% target trials
@@ -61,9 +61,10 @@ non_target_data = non_target_data(:, ind);
 
 % Combine target & non target data
 data = [target_data, non_target_data];
-labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(non_target_data, 2))];
+labels = [ones(1, size(target_data, 2)), 2 * ones(1, size(non_target_data, 2))];
 %% ----------------------------- Step 5: Model training -------------------------------
 k_fold = 5;
 c = [0.1 1 10 15 50 100];
 sigma = [1 5 10 50 80 100 120];
-result = svm_optimal(data, labels, k_fold, c, sigma);
+result = svm_linear_optimal(data, labels, k_fold, c);
+% result = svm_kernel_optimal(data, labels, k_fold, c, sigma);
