@@ -26,7 +26,7 @@ for i = 1:size(filenames, 1)
         % Start point of ith trial untill of ith trial
         data  = signal(ind(1):ind(1) + (duration_trial - 1), :);
 
-        % Detect target trials from non target trials
+        % ----------------- Detect target trials from non target trials ---------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
             data_target(:, :, count1) = data;% target trials
