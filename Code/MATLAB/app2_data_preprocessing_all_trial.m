@@ -18,7 +18,7 @@ count2 = 0;
 time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
 duration_trial = round(time_trial/1000 * fs);
 
-for i = 1:length(filenames) 
+for i = 1:size(filenames, 1) 
     load([path filenames]); % Load the data from the selected mat file
     for j = 1:max(trialnr)
         % Get the start time of each trial
