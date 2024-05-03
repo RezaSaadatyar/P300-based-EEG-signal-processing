@@ -23,7 +23,7 @@ design_method = "FIR";      % IIR, FIR
 type_filter = "bandpass";   % low, high, bandpass
 %% ------------------------- Step 3: Downsampling parameters --------------------------
 fd = 2 * f_high;
-[p, q]= rat(fd / fs);
+[p, q] = rat(fd / fs);
 %% ---------------- Step 4: Detect target trials from non target trials ---------------
 count1 = 0;
 count2 = 0;

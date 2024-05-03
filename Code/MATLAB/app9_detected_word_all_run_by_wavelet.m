@@ -74,7 +74,7 @@ model = fitcsvm(data', labels, 'Standardize', 1, 'BoxConstraint', 0.1);
     'multiselect', 'on');
 
 time_on = 0.1;         %  Active time of each character (sec)
-num_sequance = 4;     % number of seqeunce
+num_sequance = 5;     % number of seqeunce
 num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 % true_word = ['CAT', 'DOG', 'FISH', 'WATER', 'BOWL']; % Session 10
