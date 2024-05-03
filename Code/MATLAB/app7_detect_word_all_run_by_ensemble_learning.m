@@ -68,7 +68,7 @@ for j = 1:length(ind)
 end
 %% ------- Step 6: Word detection in all runs using the training model training -------
 time_on = 0.1;        %  Active time of each character (sec)
-num_sequance = 3;     % number of seqeunce
+num_sequance = 4;     % number of seqeunce
 detected_word = [];
 num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
@@ -111,7 +111,7 @@ for i = 1:length(filenames)
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
             score(ind_stim) = score(ind_stim) + sum(dist);
         end
-        % target row and column
+        % ----------------------------- target row and column -------------------------
         [~, col] = max(score(1:6));
         [~, row] = max(score(7:12));
         detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character  
@@ -120,5 +120,6 @@ for i = 1:length(filenames)
     disp(['Detected word: ', detect])
     detect=[];
 end
+% -------------------------------------------------------------------------------------
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
 disp(['Accuracy: ', num2str(accuracy)])

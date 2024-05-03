@@ -57,10 +57,10 @@ end
 ind = randperm(size(non_target_data, 3), size(target_data, 3));
 non_target_data = non_target_data(:, :, ind);
 save data target_data non_target_data
-%% ----------------------------- Step 5: Channel selection ----------------------------
+%% -------- Step 5: Channel selection by sequential backward feature selection --------
 load data
-max_channel = 10;
-removed_channels = SBFS(target_data, non_target_data, max_channel);
+max_channel = 10; % Maximum bad channel removal for sbfs
+removed_channels = sbfs(target_data, non_target_data, max_channel);
 save removed_channels
 %% ----------------------------- Step 6: Model training -------------------------------
 load removed_channels
