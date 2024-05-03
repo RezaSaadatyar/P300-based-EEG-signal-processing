@@ -116,7 +116,7 @@ for i = 1:length(filenames)
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
             score(ind_stim) = score(ind_stim) + distacne(2);
         end
-        % target row and column
+        % ---------------------------- target row and column --------------------------
         [~, col] = max(score(1:6));
         [~, row] = max(score(7:12));
 
