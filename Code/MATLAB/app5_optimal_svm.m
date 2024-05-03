@@ -43,7 +43,7 @@ for i = 1:length(filenames)
         data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
         % ------------------------------- Downsampling -------------------------------- 
-        % data = resample(data, p, q);       
+        data = resample(data, p, q);       
         % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;

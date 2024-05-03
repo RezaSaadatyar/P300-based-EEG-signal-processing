@@ -30,7 +30,7 @@ count2 = 0;
 time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
 duration_trial = round(time_trial/1000 * fs);
 % select_channel = 1:64; 
-select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz,Cz,Pz,Oz,C3,C4,P3,P4,Po7,Po8
+select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz, Cz, Pz, Oz, C3, C4, P3, P4, Po7, Po8
 
 for i = 1:length(filenames) 
     load([path filenames{i}]); % Load the data from the selected mat file
@@ -39,12 +39,12 @@ for i = 1:length(filenames)
         ind = find(trialnr==j);
         % Start point of ith trial untill of ith trial
         data  = signal(ind(1):ind(1) + (duration_trial - 1), select_channel);
-        % Filtering
+        % ------------------------------- Filtering -----------------------------------
         data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
-        % Downsampling
+        % ------------------------------- Downsampling -------------------------------- 
         data = resample(data, p, q);       
-        % Detect target trials from non target trials
+        % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
             target_data(:, count1) = data(:);% target trials
@@ -101,17 +101,17 @@ for i = 1:length(filenames)
             ind_trial= find(trialnr==trials(k));
             % Start point of ith trial untill of ith trial
             sig = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
-            % Filtering
+            % ------------------------------- Filtering -------------------------------
             sig = filtering(sig, f_low, f_high, order, fs, notch_freq, filter_active,...
                 notch_filter, type_filter, design_method);
-            % Downsampling
+            % ------------------------------ Downsampling -----------------------------
             sig = resample(sig, p, q);  
             sig = sig(:);
             [~, distacne]= predict(model, sig');
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
             score(ind_stim) = score(ind_stim) + distacne(2);
         end
-        % target row and column
+        % --------------------------- target row and column --------------------------- 
         [~, col] = max(score(1:6));
         [~, row] = max(score(7:12));
 
@@ -123,45 +123,3 @@ for i = 1:length(filenames)
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
 disp(['Accuracy: ',num2str(accuracy)])
-%% ------------------------------- Step 5: Classification -----------------------------
-% k_fold = 5;
-% num_neigh_knn = 3;
-% kernel_svm = 'linear';
-% distr_bayesian = 'normal';  % 'normal','kernel'
-% % 'linear','quadratic','diaglinear','diagquadratic','pseudolinear','pseudoquadratic'
-% discrimtype_lda = 'linear'; 
-% num_neurons_elm = 12;
-% Num_Neurons = 15;
-% num_center_rbf = 20;
-% sigma_pnn = 0.1;
-% type_pnn = 'Euclidean';      % 'Euclidean';'Correlation'
-% classifiation(data, labels, k_fold, num_neigh_knn, kernel_svm, distr_bayesian, ...
-%               discrimtype_lda, num_neurons_elm, num_center_rbf, sigma_pnn, type_pnn)
-% %% -------------------------------------- Plot ----------------------------------------
-% figure();
-% classes = unique(labels);
-% if size(features, 1) < size(features, 2); features = features'; end
-% 
-% for i = 1:numel(classes)
-%     if size(features, 1) == 2
-%         plot(features(labels == classes(i), 1), features(labels==classes(i), 2), 'o', ...
-%             'LineWidth', 1.5, 'MarkerSize', 4); hold on
-%         xlabel('Feature 1'); ylabel('Feature 2');
-%     elseif size(features, 1) > 2
-%         plot3(features(labels == classes(i), 1), features(labels == classes(i), 2), ...
-%             features(labels == classes(i), 3), 'o', 'LineWidth', 1.5, 'MarkerSize', 4);
-%         hold on
-%         xlabel('Feature 1'); ylabel('Feature 2'); zlabel('Feature 3');
-%     end
-% end
-% grid on; til=legend("class1", "Class2"); 
-% 
-% figure
-% subplot(2, 1, 1)
-% plot(data(:, 11), 'linewidth', 2);
-% hold on
-% plot(filtered_data(:, 11), 'linewidth', 2);
-% legend('Raw data', 'Filtered_data')
-% subplot(2, 1, 2)
-% plot(downsample_data(:, 11), 'linewidth', 2);
-% legend('Dowsampling')
