@@ -63,16 +63,16 @@ non_target_data = non_target_data(:, ind);
 data = [target_data, non_target_data];
 labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(non_target_data, 2))];
 %% ----------------------------- Step 5: Model training -------------------------------
-model = fitcsvm(data', labels, 'Standardize', 1);
-% model = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', 'KernelScale',...
-%     100, 'BoxConstraint', 120);
+% model = fitcsvm(data', labels, 'Standardize', 1);
+model = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', 'KernelScale',...
+    100, 'BoxConstraint', 120);
 %% ------- Step 6: Word detection in all runs using the training model training -------
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-
+aa =[];
 time_on = 0.1;         %  Active time of each character (sec)
-num_sequance = 4;     % number of seqeunce
+num_sequance = 5;     % number of seqeunce
 num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 % true_word = ['CAT', 'DOG', 'FISH', 'WATER', 'BOWL']; % Session 10
@@ -119,7 +119,9 @@ for i = 1:length(filenames)
     end
     detected_word = [detected_word, detect];
     disp(['Detected word: ', detect])
+    aa = [aa, detect];
     detect = [];
+
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
 disp(['Accuracy: ',num2str(accuracy)])
