@@ -116,6 +116,7 @@ else
         classificationLayer
         ];
 
+    
     % Training options
     options = trainingOptions('sgdm', ...
         'InitialLearnRate', 0.01, ...
