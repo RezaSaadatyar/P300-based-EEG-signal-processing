@@ -8,14 +8,14 @@ close all;      % Close all figures
 % Add the current directory and its subfolders to the MATLAB search path
 addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
-
-fs = 240;  % Define sampling frequency
+path = "D:\P300-based-EEG-signal-processing\Data\";
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 %% ------------------------- Step 2: Filtering all runs -------------------------------
+fs = 240;  % Define sampling frequency
+order = 10;
 f_low = 0.5;
 f_high = 30;
-order = 10;  
 notch_freq = 50;
 notch_filter = 'off';
 filter_active = 'on';
@@ -31,8 +31,11 @@ time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600
 duration_trial = round(time_trial/1000 * fs);
 select_channel = 1:64; 
 
-for j = 1:length(filenames) 
-    load([path filenames{j}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for i = 1:5
+    load([char(path) 'AAS010R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
+
     for k = 1:max(trialnr)
         % Get the start time of each trial
         ind = find(trialnr==k);
@@ -53,7 +56,7 @@ for j = 1:length(filenames)
         end
     end
 end
-% Balance dataset
+% ---------------------------------- Balance dataset ----------------------------------
 ind = randperm(size(non_target_data, 3), size(target_data, 3));
 non_target_data = non_target_data(:, :, ind);
 save data target_data non_target_data
@@ -87,12 +90,15 @@ num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 true_word = ['FOOD', 'MOOT', 'HAM', 'PIE', 'CAKE', 'TUNA', 'ZYGOT', '4567'];% Session 12
 
-% Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
+% % Let the user select a mat file containing EEG data
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 % ---------------- Step 6.1: Detect number of characters in each run ------------------
-for i = 1:length(filenames)
-    load([path filenames{i}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for i = 1:8
+    load([char(path) 'AAS012R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
+
     ind = find(PhaseInSequence == 2);
     id_ = find(PhaseInSequence((ind - 1)) == 1); % Detect number of characters
     strartpoints = ind(id_);                   % Detect start point each of character
@@ -127,7 +133,7 @@ for i = 1:length(filenames)
         detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character  
     end
     detected_word = [detected_word, detect];
-    disp(['Detected word: ', detect])
+    fprintf('Detected word by SVM: %s\n', detect);
     detect=[];
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;

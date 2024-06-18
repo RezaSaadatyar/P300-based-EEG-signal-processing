@@ -8,14 +8,14 @@ close all;      % Close all figures
 % Add the current directory and its subfolders to the MATLAB search path
 addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
-
-fs = 240;  % Define sampling frequency
+path = "D:\P300-based-EEG-signal-processing\Data\";
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 %% ------------------------- Step 2: Filtering all runs -------------------------------
+fs = 240;  % Define sampling frequency
+order = 10;  
 f_low = 0.5;
 f_high = 0.5;
-order = 10;  
 notch_freq = 50;
 notch_filter = 'off';
 filter_active = 'on';
@@ -32,8 +32,11 @@ duration_trial = round(time_trial/1000 * fs);
 % select_channel = 1:64; 
 select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz,Cz,Pz,Oz,C3,C4,P3,P4,Po7,Po8
 
-for j = 1:length(filenames) 
-    load([path filenames{j}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for j = 1:5
+    load([char(path) 'AAS010R0' num2str(j)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
+
     for k = 1:max(trialnr)
         % Get the start time of each trial
         ind = find(trialnr==k);
@@ -57,7 +60,7 @@ for j = 1:length(filenames)
         end
     end
 end
-% Balance dataset
+% ---------------------------------- Balance dataset ----------------------------------
 ind = randperm(size(non_target_data, 2), size(target_data, 2));
 non_target_data = non_target_data(:, ind);
 
@@ -70,8 +73,8 @@ model = fitcsvm(data', labels, 'Standardize', 1, 'BoxConstraint', 0.1);
 %     100, 'BoxConstraint', 120);
 %% ------- Step 6: Word detection in all runs using the training model training -------
 % Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 
 time_on = 0.1;         %  Active time of each character (sec)
 num_sequance = 5;     % number of seqeunce
@@ -82,8 +85,11 @@ lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 true_word = ['FOOD', 'MOOT', 'HAM', 'PIE', 'CAKE', 'TUNA', 'ZYGOT', '4567'];% Session 12
 % ---------------- Step 6.1: Detect number of characters in each run ------------------
 detected_word = [];
-for i = 1:length(filenames)
-    load([path filenames{i}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for i = 1:8
+    load([char(path) 'AAS012R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
+
     indx = find(PhaseInSequence==2);
     id = find(PhaseInSequence((indx - 1))==1); % Detect number of characters
     strartpoints = indx(id);                   % Detect start point each of character
@@ -123,7 +129,7 @@ for i = 1:length(filenames)
         detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character  
     end
     detected_word = [detected_word, detect];
-    disp(['Detected word: ', detect])
+    fprintf('Detected word by SVM: %s\n', detect);
     detect = [];
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
