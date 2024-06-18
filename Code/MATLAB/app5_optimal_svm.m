@@ -8,13 +8,14 @@ close all;      % Close all figures
 % Add the current directory and its subfolders to the MATLAB search path
 addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
+path = "D:\P300-based-EEG-signal-processing\Data\";
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 %% ------------------------- Step 2: Filtering all runs -------------------------------
 fs = 240;  % Define sampling frequency
+order = 10;  
 f_low = 0.5;
 f_high = 20;
-order = 10;  
 notch_freq = 50;
 notch_filter = 'off';
 filter_active = 'on';
@@ -31,8 +32,11 @@ duration_trial = round(time_trial/1000 * fs);
 % select_channel = 1:64; 
 select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz,Cz,Pz,Oz,C3,C4,P3,P4,Po7,Po8
 
-for i = 1:length(filenames) 
-    load([path filenames{i}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for i = 1:5
+    load([char(path) 'AAS010R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
+
     for j = 1:max(trialnr)
         % Get the start time of each trial
         ind = find(trialnr==j);
