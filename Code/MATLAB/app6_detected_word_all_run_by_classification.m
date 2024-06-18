@@ -10,9 +10,8 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-
-fs = 240;  % Define sampling frequency
 %% ------------------------- Step 2: Filtering all runs -------------------------------
+fs = 240;     % Define sampling frequency
 f_low = 0.5;
 f_high = 20;
 order = 10;
@@ -54,8 +53,7 @@ for i = 1:length(filenames)
         end
     end
 end
-
-% Balance dataset
+% -------------------------------- Balance dataset ------------------------------------
 ind = randperm(size(non_target_data, 2), size(target_data, 2));
 non_target_data = non_target_data(:, ind);
 %% ----------------------------- Step 5: Model training -------------------------------
@@ -63,7 +61,7 @@ non_target_data = non_target_data(:, ind);
 data = [target_data, non_target_data];
 labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(non_target_data, 2))];
 
-type_classifer = "cnn";
+type_classifer = "mlp";    % svm, lda, knn, mlp
 if strcmpi(type_classifer, 'SVM')
     model = fitcsvm(data', labels, 'Standardize', 1);
     % model = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', 'KernelScale',...
@@ -83,62 +81,13 @@ elseif strcmpi(type_classifer, 'MLP')
     net.divideParam.testRatio = 0.15;
     % % Train Network
     [model, ~] = train(net, data, labels);
-else
-    numFeatures = size(data, 2); % Number of features per sample
-    numSamples = size(data, 1); % Number of samples per class
-    classes = 2; % Number of classes
-    % data = [target_data; non_target_data];
-    % data = reshape(data, numFeatures, 1, 1, numSamples * classes);
-   data = reshape(data, numFeatures, 1, 1, numSamples);
-    % labels = categorical([ones(1, numSamples), 2*ones(1, numSamples)]);
-    labels = categorical([ones(1, numSamples), 2*ones(1, numSamples)]);
-    % Split data into training and validation sets
-    % idx = randperm(numSamples * classes);
-    idx = randperm(numFeatures);
-    trainData = data(:, :, :, idx(1:round(0.8*numSamples*classes)));
-    trainLabels = labels(idx(1:round(0.8*numSamples*classes)));
-    valData = data(:, :, :, idx(round(0.8*numSamples*classes)+1:end));
-    valLabels = labels(idx(round(0.8*numSamples*classes)+1:end));
-
-    % Define the 1D CNN architecture
-    layers = [
-        imageInputLayer([numFeatures, 1, 1])
-        convolution2dLayer([3, 1], 8, 'Padding', 'same') % Treating as 1D convolution
-        batchNormalizationLayer
-        reluLayer
-        maxPooling2dLayer([2, 1], 'Stride', [2, 1]) % Pooling along one dimension
-        convolution2dLayer([3, 1], 16, 'Padding', 'same')
-        batchNormalizationLayer
-        reluLayer
-        maxPooling2dLayer([2, 1], 'Stride', [2, 1])
-        fullyConnectedLayer(classes)
-        softmaxLayer
-        classificationLayer
-        ];
-
-    
-    % Training options
-    options = trainingOptions('sgdm', ...
-        'InitialLearnRate', 0.01, ...
-        'MaxEpochs', 10, ...
-        'Shuffle', 'every-epoch', ...
-        'ValidationData', {valData, valLabels}, ...
-        'ValidationFrequency', 30, ...
-        'Verbose', false, ...
-        'Plots', 'training-progress');
-
-    % Train the network
-    net = trainNetwork(trainData, trainLabels, layers, options);
 end
-
-
-% ------- Step 6: Word detection in all runs using the training model training -------
+%% ------- Step 6: Word detection in all runs using the training model training -------
 % Let the user select a mat file containing EEG data
-% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-%     'multiselect', 'on');
-path = 'D:\P300-based-EEG-signal-processing\Data\';
+[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+    'multiselect', 'on');
 time_on = 0.1;         %  Active time of each character (sec)
-num_sequance = 1;     % number of seqeunce
+num_sequance = 5;      % number of seqeunce
 num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 % true_word = ['CAT', 'DOG', 'FISH', 'WATER', 'BOWL']; % Session 10
@@ -149,6 +98,7 @@ detected_word = [];
 % for i = 1:length(filenames)
 for i = 1:8
     load([path 'AAS012R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
     indx = find(PhaseInSequence==2);
     id = find(PhaseInSequence((indx - 1))==1); % Detect number of characters
     strartpoints = indx(id);                   % Detect start point each of character
@@ -175,10 +125,7 @@ for i = 1:8
             sig = resample(sig, p, q);
             sig = sig(:);
             if strcmpi(type_classifer, 'MLP')
-                distacne = model(sig);
-            elseif strcmpi(type_classifer, 'CNN')
-                a=reshape(sig, 1, 1, 1, numSamples);
-                distacne = classify(net, a);
+                distacne = model(sig); 
             else
                 [~, distacne]= predict(model, sig');
             end
@@ -197,4 +144,4 @@ for i = 1:8
 
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
-disp(['Accuracy: ',num2str(accuracy)])
+disp(['Accuracy: ', num2str(accuracy)])

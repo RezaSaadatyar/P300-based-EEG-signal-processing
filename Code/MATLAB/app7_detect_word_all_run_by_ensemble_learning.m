@@ -10,12 +10,11 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-
-fs = 240;  % Define sampling frequency
 %% ------------------------- Step 2: Filtering all runs -------------------------------
+fs = 240;  % Define sampling frequency
 f_low = 0.5;
 f_high = 30;
-order = 10;  
+order = 10;
 notch_freq = 50;
 notch_filter = 'off';
 filter_active = 'on';
@@ -29,10 +28,10 @@ count1 = 0;
 count2 = 0;
 time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
 duration_trial = round(time_trial/1000 * fs);
-% select_channel = 1:64; 
+% select_channel = 1:64;
 select_channel = [9 11 13 34 49 51 53 56 60 62]; % fz,Cz,Pz,Oz,C3,C4,P3,P4,Po7,Po8
 
-for j = 1:length(filenames) 
+for j = 1:length(filenames)
     load([path filenames{j}]); % Load the data from the selected mat file
     for k = 1:max(trialnr)
         % Get the start time of each trial
@@ -42,8 +41,8 @@ for j = 1:length(filenames)
         % ------------------------------ Filtering ------------------------------------
         data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
-        % ------------------------------ Downsampling --------------------------------- 
-        % data = resample(data, p, q);       
+        % ------------------------------ Downsampling ---------------------------------
+        data = resample(data, p, q);
         % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
@@ -55,31 +54,51 @@ for j = 1:length(filenames)
     end
 end
 %% ----------------------------- Step 5: Model training -------------------------------
+type_classifer = "KNN";
 ind= 1:size(target_data, 2):size(non_target_data, 2);
-
+model = {};
 for j = 1:length(ind)
     data2_sub = non_target_data(:, ind(j):ind(j) + size(target_data, 2) - 1);
     data = [target_data, data2_sub];  % Combine target & non target data
     labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(data2_sub, 2))];
 
-    % model = fitcsvm(data', labels, 'Standardize', 1);
-    model{j} = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', ...
-        'KernelScale', 120, 'BoxConstraint', 100);
+    if strcmpi(type_classifer, 'SVM')
+        model{j} = fitcsvm(data', labels, 'Standardize', 1);
+        % model{j} = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', ...
+        %     'KernelScale', 120, 'BoxConstraint', 100);
+    elseif strcmpi(type_classifer, 'LDA')
+        model{j} = fitcdiscr(data', labels);
+    elseif strcmpi(type_classifer, 'KNN')
+        model{j} = fitcknn(data', labels, 'NumNeighbors', 18, 'Distance', 'euclidean', ...
+            'DistanceWeight', 'inverse', 'NSMethod','exhaustive',...
+            'StandardizeData', 0);
+    elseif strcmpi(type_classifer, 'MLP')
+        hiddenLayerSize = 10;     % Size of the hidden layer
+        net = feedforwardnet(hiddenLayerSize);
+        % Configure the training process
+        net.divideParam.trainRatio = 0.7;
+        net.divideParam.valRatio = 0.15;
+        net.divideParam.testRatio = 0.15;
+        % % Train Network
+        [model{j}, ~] = train(net, data, labels);
+    end
 end
 %% ------- Step 6: Word detection in all runs using the training model training -------
 time_on = 0.1;        %  Active time of each character (sec)
-num_sequance = 4;     % number of seqeunce
+num_sequance = 1;     % number of seqeunce
 detected_word = [];
 num_all_characters = 12;
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 true_word = ['FOOD', 'MOOT', 'HAM', 'PIE', 'CAKE', 'TUNA', 'ZYGOT', '4567'];% Session 12
 
 % Let the user select a mat file containing EEG data
-[filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
-    'multiselect', 'on');
+% [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
+%     'multiselect', 'on');
 % ---------------- Step 6.1: Detect number of characters in each run ------------------
-for i = 1:length(filenames)
-    load([path filenames{i}]); % Load the data from the selected mat file
+% for i = 1:length(filenames)
+for i = 1:8
+    load([path 'AAS012R0' num2str(i)]); % Load the data from the selected mat file
+    % load([path filenames{i}]); % Load the data from the selected mat file
     ind = find(PhaseInSequence == 2);
     id_ = find(PhaseInSequence((ind - 1)) == 1); % Detect number of characters
     strartpoints = ind(id_);                   % Detect start point each of character
@@ -101,23 +120,32 @@ for i = 1:length(filenames)
             data = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
             % ----------------------------- Filtering ---------------------------------
             data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
-            notch_filter, type_filter, design_method);
+                notch_filter, type_filter, design_method);
             % ----------------------------- Downsampling ------------------------------
-            % data = resample(data, p, q);  
-            for r = 1:size(model, 2)
+            data = resample(data, p, q);
+            if strcmpi(type_classifer, 'MLP')
+                distacne = model(sig);
+            elseif strcmpi(type_classifer, 'CNN')
+                % sig = reshape(sig, [length(sig), 1, 1]);
+                distacne =  str2num(string(classify(net, sig)));
+                
+            else
+                for r = 1:size(model, 2)
                 [~, distacne] = predict(model{r}, data(:)');
                 dist(r) = distacne(2);
             end
+            end
+
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
             score(ind_stim) = score(ind_stim) + sum(dist);
         end
         % ----------------------------- target row and column -------------------------
         [~, col] = max(score(1:6));
         [~, row] = max(score(7:12));
-        detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character  
+        detect(j) = lookup_tabel(sub2ind([6 6], row, col));   % target character
     end
     detected_word = [detected_word, detect];
-    disp(['Detected word: ', detect])
+    fprintf('Detected word by %s: %s\n', type_classifer, detect);
     detect=[];
 end
 % -------------------------------------------------------------------------------------
