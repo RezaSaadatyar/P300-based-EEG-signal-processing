@@ -10,9 +10,8 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-
-fs = 240;  % Define sampling frequency
 %% ------------------------- Step 2: Filtering all runs -------------------------------
+fs = 240;  % Define sampling frequency
 f_low = 0.5;
 f_high = 20;
 order = 10;  

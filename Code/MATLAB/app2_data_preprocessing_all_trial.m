@@ -10,9 +10,8 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'off');
-
-fs = 240;  % Define sampling frequency
 %% ----------------Step 2: Detect target trials from non target trials ----------------
+fs = 240;  % Define sampling frequency
 count1 = 0;
 count2 = 0;
 time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)

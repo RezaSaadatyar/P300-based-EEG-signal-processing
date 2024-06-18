@@ -10,10 +10,6 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'off');
-
-fs = 240;  % Define sampling frequency
-time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
-duration_trial = round(time_trial/1000 * fs);
 %% ----------------------- Step 2: Detect the words in each run -----------------------
 load([path filenames])
 indx = find(PhaseInSequence==2);
@@ -22,11 +18,14 @@ id = find(PhaseInSequence((indx - 1))==1); % Detect number of characters
 strartpoints = indx(id);                   % Detect start point each of character
 num_characters = numel(strartpoints);      % Number of characters
 % -------------------------------------------------------------------------------------
+fs = 240;  % Define sampling frequency
 time_on = 0.1;       % Active time of each character (sec)
 time_peak = 320;     % Millisecend
+time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
 num_sequance = 15;   % number of seqeunce
 select_channel = 11; % Cz
 num_all_characters = 12;
+duration_trial = round(time_trial/1000 * fs);
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 
 for i = 1:num_characters      % First loop: Number of characters
@@ -59,5 +58,3 @@ plot(samplenr, StimulusCode, 'b', 'linewidth', 0.1)
 hold on
 plot(samplenr, PhaseInSequence, 'k', 'linewidth', 2)
 plot(samplenr(strartpoints), PhaseInSequence(strartpoints), 'ro', 'linewidth', 2)
-
-

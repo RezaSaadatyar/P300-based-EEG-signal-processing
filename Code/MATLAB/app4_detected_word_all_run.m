@@ -10,15 +10,15 @@ addpath(genpath(cd))
 % Let the user select a mat file containing EEG data
 [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
     'multiselect', 'on');
-fs = 240;  % Define sampling frequency
-time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
-duration_trial = round(time_trial/1000 * fs);
 %% ----------------------- Step 2: Detect the words in each run -----------------------
+fs = 240;  % Define sampling frequency
 time_on = 0.1;    %  Active time of each character (sec)
 time_peak = 320;  % Millisecend
+time_trial = 600; % Define the duration of each trial in milliseconds (e.g., 600 is ms)
 num_sequance = 15;% number of seqeunce
 select_channel = 11; % Cz
 num_all_characters = 12;
+duration_trial = round(time_trial/1000 * fs);
 lookup_tabel = ['AGMSY5', 'BHNTZ6', 'CIOU17', 'DJPV28', 'EKQW39', 'FLRX4_'];
 true_word = ['CAT', 'DOG', 'FISH', 'WATER', 'BOWL']; % Session 10
 % true_word = ['HAT', 'HAT', 'GLOVE', 'SHOES', 'FISH', 'RAT']; % Session 11
