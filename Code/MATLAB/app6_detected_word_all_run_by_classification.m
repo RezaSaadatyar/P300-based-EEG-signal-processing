@@ -65,7 +65,7 @@ non_target_data = non_target_data(:, ind);
 data = [target_data, non_target_data];
 labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(non_target_data, 2))];
 
-type_classifer = "svm";    % svm, lda, mlp
+type_classifer = "lda";    % svm, lda, mlp
 if strcmpi(type_classifer, 'SVM')
     mdl = fitcsvm(data', labels, 'Standardize', 1);
     % model = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', 'KernelScale',...
@@ -142,7 +142,6 @@ for i = 1:8
     detected_word = [detected_word, detect];
     fprintf('Detected word by %s: %s\n', type_classifer, detect);
     detect = [];
-
 end
 accuracy = sum(detected_word==true_word) / numel(true_word) *100;
 disp(['Accuracy: ', num2str(accuracy)])
