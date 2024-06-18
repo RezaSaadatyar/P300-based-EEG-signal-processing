@@ -41,37 +41,37 @@ for i = 1:5
         % Get the start time of each trial
         ind = find(trialnr==k);
         % Start point of ith trial untill of ith trial
-        data  = signal(ind(1):ind(1) + (duration_trial - 1), select_channel);
+        sig  = signal(ind(1):ind(1) + (duration_trial - 1), select_channel);
         % ------------------------------ Filtering ------------------------------------
-        data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
+        sig = filtering(sig, f_low, f_high, order, fs, notch_freq, filter_active, ...
             notch_filter, type_filter, design_method);
         % ------------------------------ Downsampling ---------------------------------
-        data = resample(data, p, q);
+        sig = resample(sig, p, q);
         % --------------- Detect target trials from non target trials -----------------
         if max(StimulusType(ind)) == 1 % type of ith trial
             count1 = count1 + 1;
-            target_data(:, count1) = data(:);% target trials
+            target_data(:, count1) = sig(:);% target trials
         elseif max(StimulusType(ind)) == 0 % type of ith trial
             count2 = count2 + 1;
-            non_target_data(:, count2) = data(:); % non-target trials
+            non_target_data(:, count2) = sig(:); % non-target trials
         end
     end
 end
 %% ----------------------------- Step 5: Model training -------------------------------
-type_classifer = "mlp";    % svm, lda, mlp
+type_classifer = "svm";    % svm, lda, mlp
 ind= 1:size(target_data, 2):size(non_target_data, 2);
-model = {};
+mdl = {};
 for j = 1:length(ind)
     data2_sub = non_target_data(:, ind(j):ind(j) + size(target_data, 2) - 1);
-    data = [target_data, data2_sub];  % Combine target & non target data
+    sig = [target_data, data2_sub];  % Combine target & non target data
     labels = [ones(1, size(target_data, 2)), -1 * ones(1, size(data2_sub, 2))];
 
     if strcmpi(type_classifer, 'SVM')
-        model{j} = fitcsvm(data', labels, 'Standardize', 1);
+        mdl{j} = fitcsvm(sig', labels, 'Standardize', 1);
         % model{j} = fitcsvm(data', labels, 'Standardize', 1, 'KernelFunction', 'rbf', ...
         %     'KernelScale', 120, 'BoxConstraint', 100);
     elseif strcmpi(type_classifer, 'LDA')
-        model{j} = fitcdiscr(data', labels);
+        mdl{j} = fitcdiscr(sig', labels);
     elseif strcmpi(type_classifer, 'MLP')
         hiddenLayerSize = 10;     % Size of the hidden layer
         net = feedforwardnet(hiddenLayerSize);
@@ -80,7 +80,7 @@ for j = 1:length(ind)
         net.divideParam.valRatio = 0.15;
         net.divideParam.testRatio = 0.15;
         % % Train Network
-        [model{j}, ~] = train(net, data, labels);
+        [mdl{j}, ~] = train(net, sig, labels);
     end
 end
 %% ------- Step 6: Word detection in all runs using the training model training -------
@@ -117,19 +117,21 @@ for i = 1:8
         for k = 1:num_all_characters * num_sequance
             ind_trial= find(trialnr==trials(k));
             % Start point of ith trial untill of ith trial
-            data = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
+            sig = signal(ind_trial(1):ind_trial(1) + duration_trial - 1, select_channel);
             % ----------------------------- Filtering ---------------------------------
-            data = filtering(data, f_low, f_high, order, fs, notch_freq, filter_active, ...
+            sig = filtering(sig, f_low, f_high, order, fs, notch_freq, filter_active, ...
                 notch_filter, type_filter, design_method);
             % ----------------------------- Downsampling ------------------------------
-            data = resample(data, p, q);
+            sig = resample(sig, p, q);
             if strcmpi(type_classifer, 'MLP')
-                distacne = model(sig);
+                for r = 1:size(mdl, 2)
+                 dist(r) = mdl{r}(sig(:));
+                end 
             else
-                for r = 1:size(model, 2)
-                [~, distacne] = predict(model{r}, data(:)');
-                dist(r) = distacne(2);
-            end
+                for r = 1:size(mdl, 2)
+                    [~, distacne] = predict(mdl{r}, sig(:)');
+                    dist(r) = distacne(2);
+                end
             end
 
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));

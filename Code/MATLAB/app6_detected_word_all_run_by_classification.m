@@ -84,7 +84,6 @@ elseif strcmpi(type_classifer, 'MLP')
 end
 %% ------- Step 6: Word detection in all runs using the training model training -------
 % Let the user select a mat file containing EEG data
-path = "D:\P300-based-EEG-signal-processing\Data\";
 % [filenames, path] = uigetfile({'*.mat', 'mat file'; '*.*', 'All Files'}, 'File Selection', ...
 %     'multiselect', 'on');
 time_on = 0.1;         %  Active time of each character (sec)
@@ -100,6 +99,7 @@ detected_word = [];
 for i = 1:8
     load([char(path) 'AAS012R0' num2str(i)]); % Load the data from the selected mat file
     % load([path filenames{i}]); % Load the data from the selected mat file
+    
     indx = find(PhaseInSequence==2);
     id = find(PhaseInSequence((indx - 1))==1); % Detect number of characters
     strartpoints = indx(id);                   % Detect start point each of character
@@ -124,11 +124,10 @@ for i = 1:8
                 notch_filter, type_filter, design_method);
             % ------------------------------ Downsampling -----------------------------
             sig = resample(sig, p, q);
-            sig = sig(:);
             if strcmpi(type_classifer, 'MLP')
-                distacne = mdl(sig); 
+                distacne = mdl(sig(:)); 
             else
-                [~, distacne]= predict(mdl, sig');
+                [~, distacne]= predict(mdl, sig(:)');
             end
             ind_stim = max(StimulusCode(ind_trial(1):ind_trial(1) + time_on * fs - 1));
             score(ind_stim) = score(ind_stim) + distacne(end);
